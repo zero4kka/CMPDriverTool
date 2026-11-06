@@ -1,0 +1,53 @@
+{
+  "lastUpdated": "2026-11-01",
+  "drivers": [
+    {
+      "version": "552.22",
+      "name": "NVIDIA GeForce Game Ready Driver",
+      "branch": "Game Ready",
+      "releaseDate": "2024-04-16",
+      "downloadUrl": "https://ru.download.nvidia.com/Windows/552.22/552.22-desktop-win10-win11-64bit-international-dch-whql.exe",
+      "sha256": "",
+      "sizeMb": 668.5,
+      "description": "Золотой стандарт стабильности для CMP 30HX и CMP 40HX. Отличная производительность в DirectX 11/12 и Vulkan.",
+      "isRecommended": true,
+      "supportedCards": [ "CMP 30HX (DEV_2187, DEV_2188)", "CMP 40HX (DEV_2184, DEV_1F07)" ]
+    },
+    {
+      "version": "537.58",
+      "name": "NVIDIA GeForce Game Ready Driver",
+      "branch": "Game Ready",
+      "releaseDate": "2023-10-10",
+      "downloadUrl": "https://ru.download.nvidia.com/Windows/537.58/537.58-desktop-win10-win11-64bit-international-dch-whql.exe",
+      "sha256": "",
+      "sizeMb": 655.2,
+      "description": "Легендарная версия драйвера среди моддеров CMP: минимальный инпут-лаг, стабильный фреймрейт в киберспортивных играх.",
+      "isRecommended": false,
+      "supportedCards": [ "CMP 30HX (DEV_2187, DEV_2188)", "CMP 40HX (DEV_2184, DEV_1F07)" ]
+    },
+    {
+      "version": "560.94",
+      "name": "NVIDIA GeForce Game Ready Driver",
+      "branch": "Game Ready",
+      "releaseDate": "2024-08-20",
+      "downloadUrl": "https://ru.download.nvidia.com/Windows/560.94/560.94-desktop-win10-win11-64bit-international-dch-whql.exe",
+      "sha256": "",
+      "sizeMb": 692.1,
+      "description": "Обновленная ветка с поддержкой свежих релизов игр, улучшенной работой с DLSS и новыми расширениями Vulkan.",
+      "isRecommended": false,
+      "supportedCards": [ "CMP 30HX (DEV_2187, DEV_2188)", "CMP 40HX (DEV_2184, DEV_1F07)" ]
+    },
+    {
+      "version": "551.86",
+      "name": "NVIDIA Studio Driver",
+      "branch": "Studio",
+      "releaseDate": "2024-03-19",
+      "downloadUrl": "https://ru.download.nvidia.com/Windows/551.86/551.86-desktop-win10-win11-64bit-international-nsd-dch-whql.exe",
+      "sha256": "",
+      "sizeMb": 662.3,
+      "description": "Студийная версия драйвера с упором на стабильность при 3D-моделировании, рендеринге в Blender и монтаже видео.",
+      "isRecommended": false,
+      "supportedCards": [ "CMP 30HX (DEV_2187, DEV_2188)", "CMP 40HX (DEV_2184, DEV_1F07)" ]
+    }
+  ]
+}

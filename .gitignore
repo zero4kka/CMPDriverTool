@@ -1,0 +1,62 @@
+## .gitignore for CMP Driver Tool (.NET 8 WPF / C# / Visual Studio)
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+# Visual Studio Code / Rider
+.vscode/
+.idea/
+*.DotSettings.user
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build and temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+*.pidb
+*.vsp
+*.vspx
+*.sap
+*.log
+
+# Windows temporary files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Temporary driver caches & extracted working dirs
+DartraidenPatcher/
+DriverCache/
+Certs/
+Driver_*/
+_driver_temp/
+*.zip
+*.7z
+*.exe
+!CMPDriverTool*
+
+# OS generated files
+.DS_Store

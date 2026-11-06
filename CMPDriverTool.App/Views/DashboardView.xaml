@@ -1,0 +1,480 @@
+<UserControl x:Class="CMPDriverTool.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CMPDriverTool.App.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24,20,24,24">
+            <!-- Header Bar -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Диагностика и установка" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
+                    <TextBlock Text="Автоопределение NVIDIA CMP 30HX / 40HX, проверка линий PCIe и конфигурации системы"
+                               FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding RefreshAllCommand}"
+                        IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔄 Обновить статус" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- PCIe x1 Warning Banner (if detected) -->
+            <Border Style="{StaticResource FluentCard}"
+                    Background="{StaticResource WarningBackground}"
+                    BorderBrush="{StaticResource WarningBrush}"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding HasPcieWarning, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="⚠️" FontSize="32" VerticalAlignment="Center" Margin="0,0,16,0" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Внимание: Шина PCIe работает в режиме x1!"
+                                   FontWeight="Bold" FontSize="15" Foreground="{StaticResource WarningBrush}" />
+                        <TextBlock Text="{Binding PcieWarningMessage}"
+                                   TextWrapping="Wrap" FontSize="13" Margin="0,4,0,0" Foreground="{StaticResource TextPrimary}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Grid with Main Diagnostic Cards -->
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- CARD 1: GPU Diagnostics -->
+                <Border Grid.Column="0" Style="{StaticResource FluentCard}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock Text="Аппаратная диагностика GPU" FontWeight="SemiBold" FontSize="16" />
+                            <Border HorizontalAlignment="Right" CornerRadius="12" Padding="8,2"
+                                    Background="{Binding IsCmpDetected, Converter={StaticResource StatusToBrush}}">
+                                <TextBlock FontWeight="SemiBold" FontSize="11" Foreground="#09090B">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="CMP НЕ ОБНАРУЖЕНА" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCmpDetected}" Value="True">
+                                                    <Setter Property="Text" Value="CMP ОБНАРУЖЕНА" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+
+                        <!-- GPU Details -->
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Видеокарта:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedGpu.Name, FallbackValue='Не найдено'}" FontWeight="SemiBold" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Архитектура:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedGpu.ArchitectureDisplayName, FallbackValue='—'}" Foreground="{StaticResource AccentNvidia}" FontWeight="SemiBold" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Идентификатор:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedGpu.DeviceId, FallbackValue='—'}" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Ширина PCIe:" Foreground="{StaticResource TextSecondary}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedGpu.PcieLinkSummary, FallbackValue='—'}" FontWeight="Bold" />
+                                <Border Margin="8,0,0,0" CornerRadius="4" Padding="6,1"
+                                        Background="{StaticResource WarningBackground}"
+                                        Visibility="{Binding HasPcieWarning, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="x1 Stutter Risk" Foreground="{StaticResource WarningBrush}" FontSize="11" FontWeight="Bold" />
+                                </Border>
+                                <Border Margin="8,0,0,0" CornerRadius="4" Padding="6,1"
+                                        Background="#1C3322"
+                                        Visibility="{Binding IsPciePowerSaving, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="PCIe ASPM (В простое)" Foreground="{StaticResource AccentNvidia}" FontSize="11" FontWeight="Bold" />
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Текущий драйвер:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedGpu.DriverVersion, FallbackValue='Не установлен'}" />
+                        </Grid>
+
+                        <!-- Action Buttons: Clean Uninstall & Rename in System -->
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    BorderBrush="{StaticResource DangerBrush}"
+                                    Foreground="{StaticResource DangerBrush}"
+                                    Padding="10,6"
+                                    HorizontalAlignment="Stretch"
+                                    Command="{Binding CleanUninstallDriversCommand}"
+                                    IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="🧹 Удалить драйвер" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Center" />
+                            </Button>
+                            <Button Grid.Column="2"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    BorderBrush="{StaticResource AccentNvidia}"
+                                    Foreground="{StaticResource AccentNvidia}"
+                                    Padding="10,6"
+                                    HorizontalAlignment="Stretch"
+                                    ToolTip="Мгновенно применить выбранное ниже имя для видеокарты в системе без переустановки"
+                                    Command="{Binding ApplyGpuRenameCommand}"
+                                    IsEnabled="{Binding IsRenamingGpu, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="✏️ Переименовать" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Center" />
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- CARD 2: Display & Security -->
+                <Border Grid.Column="2" Style="{StaticResource FluentCard}">
+                    <StackPanel>
+                        <TextBlock Text="Вывод видео и Безопасность" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12" />
+
+                        <!-- Display output check -->
+                        <TextBlock Text="Конфигурация вывода изображения:" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4" />
+                        <Border Background="#1C1C20" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding DisplayCheck.SummaryText, FallbackValue='Определение адаптеров...'}"
+                                       TextWrapping="Wrap" FontSize="12" />
+                        </Border>
+
+                        <!-- Secure Boot status -->
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Secure Boot:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SecurityInfo.SecureBootStatusText, FallbackValue='Проверка...'}" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SecurityInfo.SecureBootEnabled}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SecurityInfo.SecureBootEnabled}" Value="False">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Test Mode status -->
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Test Mode (bcdedit):" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SecurityInfo.TestModeStatusText, FallbackValue='Проверка...'}" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SecurityInfo.TestModeEnabled}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SecurityInfo.TestModeEnabled}" Value="False">
+                                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <Button Grid.Column="2" Content="Переключить"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Padding="8,2" FontSize="11"
+                                    Command="{Binding QuickToggleTestModeCommand}" />
+                        </Grid>
+
+                        <!-- Admin status -->
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Права запуска:" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock Grid.Column="1" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Обычный пользователь (требуется UAC)" />
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SecurityInfo.IsAdministrator}" Value="True">
+                                                <Setter Property="Text" Value="Администратор (полный доступ)" />
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- CARD 3: 1-Click Installation Section -->
+            <Border Style="{StaticResource FluentCard}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Установка игрового драйвера в 1 клик" FontWeight="Bold" FontSize="18" Foreground="{StaticResource TextPrimary}" />
+                    <TextBlock Text="Автоматическая цепочка: Загрузка WHQL пакета -> Распаковка 7-Zip -> Удаление телеметрии (Debloat) -> Патчинг nvami.inf (Cross-Adapter, TU116/TU106) -> Тестовый сертификат -> Установка pnputil."
+                               FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,16" TextWrapping="Wrap" />
+
+                    <!-- Driver selector -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Версия драйвера:" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource TextSecondary}" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding AvailableDrivers}"
+                                  SelectedItem="{Binding SelectedDriver}"
+                                  VerticalAlignment="Center">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Background" Value="#1E1E22" />
+                                    <Setter Property="Foreground" Value="#F4F4F5" />
+                                    <Setter Property="Padding" Value="10,8" />
+                                    <Setter Property="Cursor" Value="Hand" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBoxItem">
+                                                <Border x:Name="ItemBorder"
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="4"
+                                                        Margin="2,1"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#33333A" />
+                                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#2D3E1A" />
+                                                        <Setter Property="Foreground" Value="{StaticResource AccentNvidia}" />
+                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayTitle}"
+                                               Foreground="#F4F4F5"
+                                               FontSize="13"
+                                               VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <Button Grid.Column="2"
+                                Content="📂 Свой .exe пакет..."
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="12,0,0,0"
+                                Command="{Binding BrowseCustomPackageCommand}" />
+                    </Grid>
+
+                    <!-- GPU Display Name Selector for Task Manager & Device Manager -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Имя в диспетчере:" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource TextSecondary}" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding GpuNamePresets}"
+                                  SelectedItem="{Binding SelectedGpuNameOption}"
+                                  VerticalAlignment="Center">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Background" Value="#1E1E22" />
+                                    <Setter Property="Foreground" Value="#F4F4F5" />
+                                    <Setter Property="Padding" Value="10,8" />
+                                    <Setter Property="Cursor" Value="Hand" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBoxItem">
+                                                <Border x:Name="ItemBorder"
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="4"
+                                                        Margin="2,1"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#33333A" />
+                                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="#2D3E1A" />
+                                                        <Setter Property="Foreground" Value="{StaticResource AccentNvidia}" />
+                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayTitle}"
+                                               Foreground="#F4F4F5"
+                                               FontSize="13"
+                                               VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <Button Grid.Column="2"
+                                Content="⚡ Применить имя сейчас"
+                                ToolTip="Мгновенно изменить имя видеокарты в Диспетчере задач и устройств без переустановки драйвера"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="12,0,0,0"
+                                Command="{Binding ApplyGpuRenameCommand}"
+                                IsEnabled="{Binding IsRenamingGpu, Converter={StaticResource InverseBoolToVis}}" />
+                    </Grid>
+
+                    <!-- Custom Name TextBox (visible when 'Своё имя...' selected) -->
+                    <Border Background="#1C1C20" CornerRadius="6" Padding="12" Margin="0,0,0,16"
+                            Visibility="{Binding IsCustomGpuName, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Пользовательское имя видеокарты:" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{StaticResource TextSecondary}" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding CustomGpuNameText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="#141416"
+                                     Foreground="#FFFFFF"
+                                     BorderBrush="#3F3F46"
+                                     Padding="8,6"
+                                     FontSize="13" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Selected Driver Details -->
+                    <Border Background="#1C1C20" CornerRadius="6" Padding="12" Margin="0,0,0,16"
+                            Visibility="{Binding SelectedDriver, Converter={StaticResource NullToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedDriver.Description}" TextWrapping="Wrap" FontSize="13" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="Дата релиза: " Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                                <TextBlock Text="{Binding SelectedDriver.ReleaseDate}" FontWeight="SemiBold" FontSize="12" Margin="0,0,16,0" />
+                                <TextBlock Text="Размер: " Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                                <TextBlock Text="{Binding SelectedDriver.SizeMb, StringFormat='{}{0} МБ'}" FontWeight="SemiBold" FontSize="12" Margin="0,0,16,0" />
+                                <TextBlock Text="Поддержка: " Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                                <TextBlock Text="CMP 30HX &amp; CMP 40HX (TU116 / TU106)" Foreground="{StaticResource AccentNvidia}" FontWeight="SemiBold" FontSize="12" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Custom package info badge if selected -->
+                    <Border Background="#203020" BorderBrush="{StaticResource AccentNvidia}" BorderThickness="1"
+                            CornerRadius="6" Padding="10" Margin="0,0,0,16"
+                            Visibility="{Binding HasCustomPackage, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding CustomPackagePath, StringFormat='Используется локальный установщик: {0}'}"
+                                       Foreground="{StaticResource AccentNvidia}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="Сбросить" Style="{StaticResource SecondaryButtonStyle}"
+                                    Padding="6,2" FontSize="11" Margin="8,0,0,0"
+                                    Command="{Binding ClearCustomPackageCommand}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Large 1-Click Install Button -->
+                    <!-- Patcher Options & Dartraiden Integration -->
+                    <Border Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Text="Официальный патчер: " FontWeight="SemiBold" />
+                                <TextBlock Text="dartraiden/NVIDIA-patcher (GitHub)" FontWeight="Bold" Foreground="{StaticResource AccentNvidia}" />
+                            </StackPanel>
+                            <TextBlock Text="Автоматически синхронизирует и применяет официальные правила dartraiden для полной разблокировки Direct3D ускорения в играх."
+                                       FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10" TextWrapping="Wrap" />
+
+                            <CheckBox IsChecked="{Binding UseNvencPreset}" Margin="0,0,0,0">
+                                <TextBlock Text="Включить пресет NVENC / NvFBC (снятие ограничений на количество сессий стриминга/записи видео)"
+                                           FontSize="13" Foreground="{StaticResource TextPrimary}" />
+                            </CheckBox>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Height="48"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Command="{Binding StartInstallCommand}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⚡ УСТАНОВИТЬ МОДИФИЦИРОВАННЫЙ ДРАЙВЕР В 1 КЛИК" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
