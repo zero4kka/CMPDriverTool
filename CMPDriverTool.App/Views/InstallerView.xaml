@@ -186,7 +186,7 @@
                     <Border Margin="4,0" Background="#1C1C20" CornerRadius="6" Padding="8">
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock Text="6. Установка" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center" />
-                            <TextBlock Text="pnputil" FontSize="10" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" />
+                            <TextBlock Text="NVIDIA Setup" FontSize="10" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" />
                             <TextBlock FontSize="14" Margin="0,4,0,0" HorizontalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -322,6 +322,18 @@
 
             <!-- Action buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="📂 Папка с драйвером"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,8,0"
+                        Command="{Binding OpenDriverFolderCommand}"
+                        ToolTip="Открыть папку с распакованным и модифицированным драйвером NVIDIA" />
+
+                <Button Content="⚡ Запустить setup.exe"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,12,0"
+                        Command="{Binding LaunchSetupExeManualCommand}"
+                        ToolTip="Запустить официальный графический мастер установки NVIDIA" />
+
                 <Button Content="Отменить установку"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Margin="0,0,12,0"

@@ -22,7 +22,7 @@ public partial class DashboardViewModel : ObservableObject
     private readonly SecurityService _securityService;
     private readonly ManifestManager _manifestManager;
     private readonly SystemToolsService _toolsService;
-    private readonly Action<DriverManifestItem, string?, bool, string?> _onNavigateToInstall;
+    private readonly Action<DriverManifestItem, string?, bool, string?, bool> _onNavigateToInstall;
 
     [ObservableProperty]
     private ObservableCollection<GpuDeviceInfo> _gpus = new();
@@ -84,6 +84,9 @@ public partial class DashboardViewModel : ObservableObject
     private bool _useNvencPreset = false;
 
     [ObservableProperty]
+    private bool _launchSetupExe = true;
+
+    [ObservableProperty]
     private bool _isScanning;
 
     [ObservableProperty]
@@ -104,7 +107,7 @@ public partial class DashboardViewModel : ObservableObject
     public bool HasCustomPackage => !string.IsNullOrEmpty(CustomPackagePath);
 
     public DashboardViewModel(
-        Action<DriverManifestItem, string?, bool, string?> onNavigateToInstall,
+        Action<DriverManifestItem, string?, bool, string?, bool> onNavigateToInstall,
         GpuDetector? gpuDetector = null,
         SecurityService? securityService = null,
         ManifestManager? manifestManager = null,
@@ -277,7 +280,7 @@ public partial class DashboardViewModel : ObservableObject
         }
 
         string chosenName = (IsCustomGpuName ? CustomGpuNameText : SelectedGpuNameOption?.NameValue)?.Trim() ?? "NVIDIA GeForce GTX 1660 SUPER";
-        _onNavigateToInstall(SelectedDriver, CustomPackagePath, UseNvencPreset, chosenName);
+        _onNavigateToInstall(SelectedDriver, CustomPackagePath, UseNvencPreset, chosenName, LaunchSetupExe);
     }
 
     private void UpdateGpuNamePresets(GpuDeviceInfo? gpu)

@@ -457,6 +457,15 @@
                             <TextBlock Text="Автоматически синхронизирует и применяет официальные правила dartraiden для полной разблокировки Direct3D ускорения в играх."
                                        FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10" TextWrapping="Wrap" />
 
+                            <CheckBox IsChecked="{Binding LaunchSetupExe}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="Запустить официальный установщик NVIDIA (setup.exe) после патчинга [Рекомендуется]"
+                                               FontSize="13" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
+                                    <TextBlock Text="После распаковки и модификации INF открывает официальный графический мастер NVIDIA (с возможностью чистой установки)."
+                                               FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </CheckBox>
+
                             <CheckBox IsChecked="{Binding UseNvencPreset}" Margin="0,0,0,0">
                                 <TextBlock Text="Включить пресет NVENC / NvFBC (снятие ограничений на количество сессий стриминга/записи видео)"
                                            FontSize="13" Foreground="{StaticResource TextPrimary}" />

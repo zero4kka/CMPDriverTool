@@ -439,18 +439,17 @@ public class DartraidenPatcherService
         }
 
         // 5. Update [Strings] section
-        string name30hx = !string.IsNullOrWhiteSpace(customGpuName)
-            ? customGpuName.Trim()
-            : "NVIDIA CMP 30HX (Gaming Edition - TU116)";
-        string name30hxSuper = !string.IsNullOrWhiteSpace(customGpuName)
-            ? customGpuName.Trim()
-            : "NVIDIA CMP 30HX / GTX 1660 SUPER (Gaming Edition - TU116)";
-        string name40hx = !string.IsNullOrWhiteSpace(customGpuName)
-            ? customGpuName.Trim()
-            : "NVIDIA CMP 40HX (Gaming Edition - TU106)";
-        string name40hxSuper = !string.IsNullOrWhiteSpace(customGpuName)
-            ? customGpuName.Trim()
-            : "NVIDIA CMP 40HX / RTX 2060 SUPER (Gaming Edition - TU106)";
+        static string SanitizeInfString(string? input, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return fallback;
+            string clean = input.Replace("\"", "").Replace("\r", "").Replace("\n", "").Replace(";", "").Trim();
+            return string.IsNullOrWhiteSpace(clean) ? fallback : clean;
+        }
+
+        string name30hx = SanitizeInfString(customGpuName, "NVIDIA CMP 30HX (Gaming Edition - TU116)");
+        string name30hxSuper = SanitizeInfString(customGpuName, "NVIDIA CMP 30HX / GTX 1660 SUPER (Gaming Edition - TU116)");
+        string name40hx = SanitizeInfString(customGpuName, "NVIDIA CMP 40HX (Gaming Edition - TU106)");
+        string name40hxSuper = SanitizeInfString(customGpuName, "NVIDIA CMP 40HX / RTX 2060 SUPER (Gaming Edition - TU106)");
 
         string stringsToInject =
             "\n; === dartraiden CMP Mod Strings ===\n" +

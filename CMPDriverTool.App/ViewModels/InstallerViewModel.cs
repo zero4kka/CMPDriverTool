@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -8,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CMPDriverTool.Core;
 using CMPDriverTool.Core.Hardware;
+using CMPDriverTool.Core.Manifest;
 using CMPDriverTool.Core.Models;
 
 namespace CMPDriverTool.App.ViewModels;
@@ -85,7 +87,8 @@ public partial class InstallerViewModel : ObservableObject
         DriverManifestItem driver,
         string? localPackagePath,
         bool useNvenc = false,
-        string? customGpuName = null)
+        string? customGpuName = null,
+        bool launchSetupExe = true)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();
@@ -108,6 +111,14 @@ public partial class InstallerViewModel : ObservableObject
         {
             AppendLog($"Отображаемое имя в системе (Диспетчер задач): {customGpuName}");
         }
+        if (launchSetupExe)
+        {
+            AppendLog("Режим установки: Запуск официального графического установщика NVIDIA (setup.exe)");
+        }
+        else
+        {
+            AppendLog("Режим установки: Фоновая установка pnputil.exe");
+        }
         if (useNvenc) AppendLog("Режим NVENC: включен пресет Presets_NVENC.txt (снятие лимита сессий)");
         if (!string.IsNullOrEmpty(localPackagePath))
         {
@@ -119,7 +130,7 @@ public partial class InstallerViewModel : ObservableObject
         try
         {
             var result = await _orchestrator.ExecuteInstallationWorkflowAsync(
-                driver, localPackagePath, useNvenc, customGpuName, progress, _cts.Token);
+                driver, localPackagePath, useNvenc, customGpuName, launchSetupExe, progress, _cts.Token);
 
             IsInstalling = false;
             if (result.Success)
@@ -330,6 +341,60 @@ public partial class InstallerViewModel : ObservableObject
         else
         {
             MessageBox.Show($"Не удалось активировать Test Mode: {msg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenDriverFolder()
+    {
+        try
+        {
+            string workBase = ManifestManager.DefaultWorkDirectory;
+            string extractDir = Path.Combine(workBase, $"Driver_{DriverVersion}");
+            if (!Directory.Exists(extractDir))
+            {
+                extractDir = workBase;
+            }
+            if (Directory.Exists(extractDir))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = extractDir,
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не удалось открыть папку: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    [RelayCommand]
+    private void LaunchSetupExeManual()
+    {
+        try
+        {
+            string workBase = ManifestManager.DefaultWorkDirectory;
+            string extractDir = Path.Combine(workBase, $"Driver_{DriverVersion}");
+            string setupExe = Path.Combine(extractDir, "setup.exe");
+            if (File.Exists(setupExe))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = setupExe,
+                    WorkingDirectory = extractDir,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                MessageBox.Show($"Файл setup.exe не найден в {extractDir}.\nВозможно, драйвер еще не был распакован.", "Файл не найден", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка запуска setup.exe: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

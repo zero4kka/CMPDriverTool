@@ -37,10 +37,10 @@ public partial class MainViewModel : ObservableObject
     {
         _installerVm = new InstallerViewModel(onReturnToDashboard: () => CurrentTab = NavigationTab.Dashboard);
 
-        _dashboardVm = new DashboardViewModel(onNavigateToInstall: (driver, localPath, useNvenc, customGpuName) =>
+        _dashboardVm = new DashboardViewModel(onNavigateToInstall: (driver, localPath, useNvenc, customGpuName, launchSetup) =>
         {
             CurrentTab = NavigationTab.Installer;
-            _ = _installerVm.StartInstallationAsync(driver, localPath, useNvenc, customGpuName);
+            _ = _installerVm.StartInstallationAsync(driver, localPath, useNvenc, customGpuName, launchSetup);
         });
 
         _gamesVm = new GamesViewModel();

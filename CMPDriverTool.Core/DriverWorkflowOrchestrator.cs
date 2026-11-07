@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,6 +41,7 @@ public class DriverWorkflowOrchestrator
         string? localPackageOverridePath = null,
         bool useNvencPreset = false,
         string? customGpuName = null,
+        bool launchSetupExe = true,
         IProgress<InstallProgressReport>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -125,8 +127,94 @@ public class DriverWorkflowOrchestrator
             // Perform signing on the patched driver package files
             _certificateManager.SignDriverPackage(extractedPath, null, progress);
 
-            // 6. Driver Installation via pnputil
+            // 6. Driver Installation (Official NVIDIA setup.exe or silent pnputil)
+            if (launchSetupExe)
+            {
+                string displayDriverDir = Path.GetDirectoryName(patchResult.PatchedInfPath)!;
+                string setupCandidate = Path.GetFullPath(Path.Combine(displayDriverDir, "..", "setup.exe"));
+                if (!File.Exists(setupCandidate)) setupCandidate = Path.Combine(displayDriverDir, "setup.exe");
+
+                if (File.Exists(setupCandidate))
+                {
+                    progress?.Report(new InstallProgressReport
+                    {
+                        Stage = InstallStage.InstallingDriver,
+                        StageTitle = "Запуск установщика NVIDIA",
+                        Message = $"Патчинг завершен! Запуск официального графического установщика NVIDIA ({Path.GetFileName(setupCandidate)})...",
+                        ProgressPercentage = 80
+                    });
+
+                    var setupPsi = new ProcessStartInfo
+                    {
+                        FileName = setupCandidate,
+                        WorkingDirectory = Path.GetDirectoryName(setupCandidate)!,
+                        UseShellExecute = true
+                    };
+
+                    using var setupProcess = Process.Start(setupPsi);
+                    if (setupProcess != null)
+                    {
+                        progress?.Report(new InstallProgressReport
+                        {
+                            Stage = InstallStage.InstallingDriver,
+                            StageTitle = "Официальный установщик NVIDIA",
+                            Message = "Окно установщика NVIDIA открыто. Пожалуйста, выполните установку (рекомендуется «Выборочная» -> «Чистая установка»).",
+                            ProgressPercentage = 90
+                        });
+
+                        await setupProcess.WaitForExitAsync(cancellationToken);
+
+                        if (!string.IsNullOrWhiteSpace(customGpuName))
+                        {
+                            try
+                            {
+                                new Tools.SystemToolsService().RenameInstalledGpu(customGpuName);
+                            }
+                            catch { }
+                        }
+
+                        if (setupProcess.ExitCode == 0 || setupProcess.ExitCode == 1 || setupProcess.ExitCode == 3010)
+                        {
+                            progress?.Report(new InstallProgressReport
+                            {
+                                Stage = InstallStage.Completed,
+                                StageTitle = "Установка завершена успешно",
+                                Message = "Установка модифицированного драйвера успешно завершена через официальный установщик NVIDIA! Рекомендуется перезагрузить ПК.",
+                                ProgressPercentage = 100
+                            });
+
+                            return new DriverInstallResult
+                            {
+                                Success = true,
+                                ExitCode = setupProcess.ExitCode,
+                                RebootRequired = true,
+                                OutputLog = "Драйвер успешно установлен через официальный установщик NVIDIA (setup.exe)."
+                            };
+                        }
+                        else
+                        {
+                            return new DriverInstallResult
+                            {
+                                Success = false,
+                                ExitCode = setupProcess.ExitCode,
+                                ErrorMessage = $"Установщик NVIDIA завершился с кодом {setupProcess.ExitCode} (возможно, установка была прервана или закрыта).",
+                                OutputLog = $"setup.exe exit code: {setupProcess.ExitCode}"
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Fallback or explicit silent mode: pnputil
             var installResult = await _driverInstaller.InstallDriverAsync(patchResult.PatchedInfPath, progress, cancellationToken);
+            if (installResult.Success && !string.IsNullOrWhiteSpace(customGpuName))
+            {
+                try
+                {
+                    new Tools.SystemToolsService().RenameInstalledGpu(customGpuName);
+                }
+                catch { }
+            }
             return installResult;
         }
         catch (OperationCanceledException)

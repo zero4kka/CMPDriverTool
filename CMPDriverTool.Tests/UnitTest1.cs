@@ -597,14 +597,16 @@ public class ViewModelTests
         string? passedPath = null;
         bool? passedNvenc = null;
         string? passedGpuName = null;
+        bool? passedLaunchSetup = null;
 
         var vm = new CMPDriverTool.App.ViewModels.DashboardViewModel(
-            onNavigateToInstall: (driver, path, nvenc, name) =>
+            onNavigateToInstall: (driver, path, nvenc, name, launchSetup) =>
             {
                 passedDriver = driver;
                 passedPath = path;
                 passedNvenc = nvenc;
                 passedGpuName = name;
+                passedLaunchSetup = launchSetup;
             });
 
         var dummyDriver = new DriverManifestItem { Version = "552.22" };
@@ -619,6 +621,7 @@ public class ViewModelTests
         Assert.Null(passedPath);
         Assert.True(passedNvenc);
         Assert.False(string.IsNullOrWhiteSpace(passedGpuName));
+        Assert.True(passedLaunchSetup);
     }
 
     [Fact]
@@ -689,7 +692,7 @@ public class ViewModelTests
     public void DashboardViewModel_NameSelection_UpdatesCustomFlagAndName()
     {
         var vm = new CMPDriverTool.App.ViewModels.DashboardViewModel(
-            onNavigateToInstall: (driver, path, nvenc, name) => { });
+            onNavigateToInstall: (driver, path, nvenc, name, launchSetup) => { });
 
         Assert.NotEmpty(vm.GpuNamePresets);
         var customOption = vm.GpuNamePresets.FirstOrDefault(p => p.IsCustom);
